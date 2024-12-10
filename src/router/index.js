@@ -54,7 +54,27 @@ export const constantRoutes = [
       meta: { title: 'Dashboard', icon: 'dashboard' }
     }]
   },
-
+  {
+    path: '/article',
+    component: Layout,
+    redirect: '/article/article',
+    name: 'Article',
+    meta: { title: '博客管理', icon: 'el-icon-document' },
+    children: [
+      {
+        path: '/article',
+        name: 'Article',
+        component: () => import('@/views/article/index.vue'),
+        meta: { title: '文章管理' }
+      },
+      {
+        path: '/category',
+        name: 'Category',
+        component: () => import('@/views/category/index.vue'),
+        meta: { title: '分类管理' }
+      }
+    ]
+  },
   {
     path: '/example',
     component: Layout,
