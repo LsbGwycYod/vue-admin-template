@@ -55,23 +55,26 @@ export const constantRoutes = [
     }]
   },
   {
-    path: '/article',
+    name: 'Blog/article',
+    path: '/blog/article',
+    hidden: false,
+    redirect: 'noRedirect',
     component: Layout,
-    redirect: '/article/article',
-    name: 'Article',
-    meta: { title: '博客管理', icon: 'el-icon-document' },
+    alwaysShow: true,
+    meta: { title: '博客管理', icon: 'el-icon-document', noCache: false, link: null },
     children: [
       {
-        path: '/article',
         name: 'Article',
+        path: '/article',
+        hidden: false,
         component: () => import('@/views/article/index.vue'),
-        meta: { title: '文章管理' }
+        meta: { title: '文章管理', noCache: false, link: null }
       },
       {
-        path: '/category',
         name: 'Category',
+        path: '/category',
         component: () => import('@/views/category/index.vue'),
-        meta: { title: '分类管理' }
+        meta: { title: '分类管理', noCache: false, link: null }
       }
     ]
   },
