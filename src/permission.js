@@ -32,9 +32,20 @@ router.beforeEach(async(to, from, next) => {
       } else {
         try {
           // get user info
-          await store.dispatch('user/getInfo')
+          // 从请求中获取到角色
+          const val = await store.dispatch('user/getInfo')
+          console.log(val.roles)
+          // 把当前登录用户信息放到sessionStorage
+          sessionStorage.setItem('roles', JSON.stringify(val))
+
+          // 这里从permission/generateRoutes拿到路由
+          const accessRoutes = await store.dispatch('permission/generateRoutes', val.roles)
 
           next()
+          // 刷新路由
+          router.options.routes = store.getters.permission_routes
+          // dynamically add accessible routes
+          router.addRoutes(accessRoutes)
         } catch (error) {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')

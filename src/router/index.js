@@ -30,6 +30,20 @@ import Layout from '@/layout'
  * a base page that does not have permission requirements
  * all roles can be accessed
  */
+export const asyncRoutes = [
+  {
+    path: 'external-link',
+    component: Layout,
+    children: [
+      {
+        path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
+        // 重点：role
+        meta: { title: 'External Link', icon: 'link', role: ['admin'] }
+      }
+    ]
+  }
+]
+
 export const constantRoutes = [
   {
     path: '/login',

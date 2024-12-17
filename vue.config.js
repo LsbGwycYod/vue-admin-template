@@ -36,12 +36,13 @@ module.exports = {
       warnings: false,
       errors: true
     },
-    before: require('./mock/mock-server.js'),
+    // before: require('./mock/mock-server.js'),
     proxy: {
-      '/api': {
+      '^/proxy': {
         target: 'http://localhost:8089',
         changeOrigin: true,
-        pathRewrite: { '^/api': '' }
+        ws: true,
+        pathRewrite: { '^/proxy': '' }
       }
     }
   },

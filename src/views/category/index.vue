@@ -1,6 +1,5 @@
 <script>
-import axios from 'axios'
-import { BASE_URL, TOKEN } from '@/config/config'
+import { delCategory, editCategory, getCategory, getList } from '@/api/category'
 
 export default {
   name: 'Category',
@@ -16,6 +15,7 @@ export default {
       pageSize: 10,
       total: 0,
       dialogForm: {
+        id: '',
         name: '',
         code: ''
       },
@@ -36,7 +36,6 @@ export default {
   },
   methods: {
     handleSelectionChange(val) {
-      console.log(val)
       this.multipleSelection = val
     },
     sizeChangeHandler(val) {
@@ -53,54 +52,8 @@ export default {
       if (mode === 'RESET') {
         this.queryForm = this.$options.data().queryForm
         this.$refs.queryForm.resetFields()
-        console.log(this.queryForm)
       }
       this.listCategoryApi()
-    },
-    listCategoryApi() {
-      const params = JSON.parse(JSON.stringify(this.queryForm))
-      params.pageNum = this.currentPage
-      params.pageSize = this.pageSize
-      axios({
-        url: BASE_URL + '/blog/category/list',
-        method: 'GET',
-        headers: {
-          Authorization: TOKEN
-        },
-        params: params
-      }).then(res => {
-        // 异步请求成功后调用回调函数，callback
-        const data = res.data
-        if (data.code !== 200) {
-          this.$message.error(data.msg)
-          return
-        }
-        this.tableData = data.rows
-        this.total = data.total
-      })
-    },
-    getCategoryApi(id) {
-      console.log(id)
-      return new Promise((resolve, reject) => {
-        axios({
-          url: BASE_URL + '/blog/category/' + id,
-          method: 'GET',
-          headers: {
-            Authorization: TOKEN
-          }
-        }).then(res => {
-          const data = res.data
-          if (data.code !== 200) {
-            this.$message.error(data.msg)
-            reject()
-          }
-          resolve(data.data)
-          // eslint-disable-next-line handle-callback-err
-        }).catch(err => {
-          this.$message.error('查询失败')
-          reject()
-        })
-      })
     },
     insertHandler() {
       this.dialogMode = 'INSERT'
@@ -108,24 +61,15 @@ export default {
       this.resetDialogForm()
     },
     updateHandler(data) {
-      console.log(data)
       this.dialogMode = 'UPDATE'
       this.dialogVisible = true
       this.resetDialogForm(data)
     },
     deleteHandler(id) {
-      console.log(id)
-      axios({
-        url: BASE_URL + '/blog/category/' + id,
-        method: 'DELETE',
-        headers: {
-          Authorization: TOKEN
-        }
-      }).then(res => {
-        const data = res.data
-        console.log(data)
-        if (data.code !== 200) {
-          this.$message.error(data.msg)
+      delCategory(id).then(res => {
+        console.log(res)
+        if (res.code !== 200) {
+          this.$message.error(res.data.msg)
           return
         }
         this.$message.success('删除成功')
@@ -134,32 +78,26 @@ export default {
     },
     batchDeleteHandler() {
       const ids = this.multipleSelection.map(item => item.id)
-      console.log(ids)
       this.deleteHandler(ids.join(','))
     },
     exportHandler(data) {
       console.log(data)
     },
-    editNoticeApi() {
-      axios({
-        url: BASE_URL + '/blog/category',
-        method: this.dialogMode === 'INSERT' ? 'POST' : 'PUT',
-        headers: {
-          Authorization: TOKEN
-        },
-        data: this.dialogForm
-      }).then(res => {
-        const data = res.data
-        if (data.code !== 200) {
-          this.$message.error(data.msg)
+    editCategoryApi() {
+      editCategory(this.dialogMode, this.dialogForm).then(res => {
+        console.log('edit:' + res)
+        if (res.code !== 200) {
+          this.$message.error(res.msg)
           return
         }
-        // 短路运算符
-        this.$message.success(data.msg || '新增成功')
+        this.$message.success(res.msg)
         this.listCategoryApi()
-        // eslint-disable-next-line handle-callback-err
       }).catch(err => {
-        this.$message.error('操作失败')
+        if (err.code === 'ECONNABORTED') {
+          this.$message.error('请求超时')
+        } else {
+          this.$message.error('操作失败')
+        }
       }).finally(() => {
         this.dialogVisible = false
       })
@@ -169,7 +107,7 @@ export default {
         if (!flag) {
           return false
         }
-        this.editNoticeApi()
+        this.editCategoryApi()
       })
     },
     resetDialogForm(data) {
@@ -182,14 +120,44 @@ export default {
         this.$refs.dialogForm.resetFields()
         this.$refs.dialogForm.clearValidate()
         if (this.dialogMode === 'UPDATE') {
-          // 表格数据
-          // this.dialogForm = JSON.parse(JSON.stringify(data)), 注意深拷贝浅拷贝
-          // 后端接口数据
           this.getCategoryApi(data.id).then(res => {
-            console.log(res)
-            this.dialogForm = res
+            this.dialogForm = JSON.parse(JSON.stringify(res))
+          }).catch(err => {
+            console.error('Failed to fetch category data:', err)
           })
         }
+      })
+    },
+    getCategoryApi(id) {
+      return new Promise((resolve, reject) => {
+        getCategory(id).then(res => {
+          console.log(res)
+          if (res.code !== 200) {
+            this.$message.error(res.msg)
+            reject()
+          }
+          resolve(res.data)
+        }).catch(() => {
+          this.$message.error('查询失败')
+          reject()
+        })
+      })
+    },
+    listCategoryApi() {
+      const params = JSON.parse(JSON.stringify(this.queryForm))
+      params.pageNum = this.currentPage
+      params.pageSize = this.pageSize
+      getList(params).then(res => {
+        console.log(res) // 打印响应数据
+        if (res.code !== 200) {
+          this.$message.error(res.data.msg)
+          return
+        }
+        this.tableData = res.data.rows
+        this.total = res.data.total
+      }).catch(error => {
+        console.error('Error fetching list:', error) // 打印错误信息
+        this.$message.error('An error occurred while fetching the list.')
       })
     }
   }
