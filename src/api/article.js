@@ -1,25 +1,25 @@
 import service from '@/utils/request'
 
-export function getList(params) {
+export function getArticleList(params) {
   return service({
     url: '/blog/article/list',
     method: 'get',
     params
   })
 }
-export function getCategory(id) {
+export function getArticle(id) {
   return service({
     url: '/blog/article/' + id,
     method: 'get'
   })
 }
-export function delCategory(id) {
+export function delArticle(id) {
   return service({
     url: '/blog/article/' + id,
     method: 'delete'
   })
 }
-export function editCategory(mode, data) {
+export function editArticle(mode, data) {
   return service({
     url: '/blog/article',
     method: mode === 'INSERT' ? 'post' : 'put',

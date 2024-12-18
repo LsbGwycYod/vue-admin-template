@@ -1,6 +1,6 @@
 import service from '@/utils/request'
 
-export function getList(params) {
+export function getCategoryList(params) {
   return service({
     url: '/blog/category/list',
     method: 'get',

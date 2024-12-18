@@ -12,6 +12,14 @@ import App from './App'
 import store from './store'
 import router from './router'
 
+import VueQuillEditor from 'vue-quill-editor'
+
+import 'quill/dist/quill.core.css' // 引入样式
+import 'quill/dist/quill.snow.css' // snow theme
+import 'quill/dist/quill.bubble.css' // bubble theme
+
+Vue.use(VueQuillEditor /* { default global options } */)
+
 import '@/icons' // icon
 // import '@/permission' // permission control
 

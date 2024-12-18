@@ -1,5 +1,5 @@
 <script>
-import { delCategory, editCategory, getCategory, getList } from '@/api/category'
+import { delCategory, editCategory, getCategory, getCategoryList } from '@/api/category'
 
 export default {
   name: 'Category',
@@ -68,10 +68,6 @@ export default {
     deleteHandler(id) {
       delCategory(id).then(res => {
         console.log(res)
-        if (res.code !== 200) {
-          this.$message.error(res.data.msg)
-          return
-        }
         this.$message.success('删除成功')
         this.listCategoryApi()
       })
@@ -86,11 +82,6 @@ export default {
     editCategoryApi() {
       editCategory(this.dialogMode, this.dialogForm).then(res => {
         console.log('edit:' + res)
-        if (res.code !== 200) {
-          this.$message.error(res.msg)
-          return
-        }
-        this.$message.success(res.msg)
         this.listCategoryApi()
       }).catch(err => {
         if (err.code === 'ECONNABORTED') {
@@ -132,10 +123,6 @@ export default {
       return new Promise((resolve, reject) => {
         getCategory(id).then(res => {
           console.log(res)
-          if (res.code !== 200) {
-            this.$message.error(res.msg)
-            reject()
-          }
           resolve(res.data)
         }).catch(() => {
           this.$message.error('查询失败')
@@ -147,12 +134,8 @@ export default {
       const params = JSON.parse(JSON.stringify(this.queryForm))
       params.pageNum = this.currentPage
       params.pageSize = this.pageSize
-      getList(params).then(res => {
+      getCategoryList(params).then(res => {
         console.log(res) // 打印响应数据
-        if (res.code !== 200) {
-          this.$message.error(res.data.msg)
-          return
-        }
         this.tableData = res.data.rows
         this.total = res.data.total
       }).catch(error => {
@@ -169,7 +152,7 @@ export default {
     <div class="head">
       <el-form v-show="queryFormVisible" ref="queryForm" :inline="true" :model="queryForm">
         <el-form-item label="名称" label-width="68px">
-          <el-input v-model="queryForm.name" placeholder="请输入名称" size="mini"></el-input>
+          <el-input v-model="queryForm.name" placeholder="请输入名称" size="mini" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="queryHandler">搜索</el-button>
@@ -186,8 +169,8 @@ export default {
           <el-button type="warning" plain icon="el-icon-download" size="mini" @click="exportHandler">导出</el-button>
         </div>
         <div class="row-right">
-          <el-button icon="el-icon-search" circle size="mini" @click="queryFormVisible=!queryFormVisible"></el-button>
-          <el-button icon="el-icon-refresh" circle size="mini" @click="queryHandler"></el-button>
+          <el-button icon="el-icon-search" circle size="mini" @click="queryFormVisible=!queryFormVisible" />
+          <el-button icon="el-icon-refresh" circle size="mini" @click="queryHandler" />
         </div>
       </div>
       <div class="table">
@@ -195,29 +178,31 @@ export default {
           ref="multipleTable"
           :data="tableData"
           tooltip-effect="dark"
-          @selection-change="handleSelectionChange">
+          @selection-change="handleSelectionChange"
+        >
           <el-table-column
             type="selection"
-            width="55">
-          </el-table-column>
+            width="55"
+          />
           <el-table-column
             prop="id"
             label="ID"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="name"
             label="名称"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="code"
             label="编码"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             label="操作"
-            align="center">
+            align="center"
+          >
             <template slot-scope="scope">
               <el-button type="text" icon="el-icon-edit" size="mini" @click="updateHandler(scope.row)">修改</el-button>
               <el-button type="text" icon="el-icon-delete" size="mini" @click="deleteHandler(scope.row.id)">删除</el-button>
@@ -234,16 +219,16 @@ export default {
           :page-size="pageSize"
           layout="->, total, sizes, prev, pager, next, jumper"
           @size-change="sizeChangeHandler"
-          @current-change="currentChangeHandler">
-        </el-pagination>
+          @current-change="currentChangeHandler"
+        />
       </div>
       <el-dialog :title="dialogMode==='INSERT'?'添加分类管理':'修改分类管理'" :visible.sync="dialogVisible">
         <el-form ref="dialogForm" :model="dialogForm" :rules="dialogRules">
           <el-form-item label="名称" prop="name" label-width="80px">
-            <el-input v-model="dialogForm.name" placeholder="请输入名称"></el-input>
+            <el-input v-model="dialogForm.name" placeholder="请输入名称" />
           </el-form-item>
           <el-form-item label="编码" prop="code" label-width="80px">
-            <el-input v-model="dialogForm.code" placeholder="请输入编码"></el-input>
+            <el-input v-model="dialogForm.code" placeholder="请输入编码" />
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">

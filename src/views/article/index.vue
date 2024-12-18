@@ -1,5 +1,5 @@
 <script>
-import service from '@/utils/request'
+import { delArticle, editArticle, getArticle, getArticleList } from '@/api/article'
 
 export default {
   name: 'Article',
@@ -35,7 +35,9 @@ export default {
         author: [
           { required: true, message: '作者不能为空', trigger: 'blur' }
         ]
-      }
+      },
+      stateList: ['草稿', '已上线', '已下线'],
+      categoryList: ['前端', '后端']
     }
   },
   created() {
@@ -77,13 +79,9 @@ export default {
     },
     deleteHandler(id) {
       console.log(id)
-      service.delete('/blog/article/' + id).then(res => {
+      delArticle(id).then(res => {
         const data = res.data
         console.log(data)
-        if (data.code !== 200) {
-          this.$message.error(data.msg)
-          return
-        }
         this.$message.success('删除成功')
         this.listArticleApi()
       })
@@ -96,12 +94,26 @@ export default {
     exportHandler() {
       console.log('exportHandler')
     },
+    editArticleApi() {
+      editArticle(this.dialogMode, this.dialogForm).then(res => {
+        console.log('edit:' + res)
+        this.listArticleApi()
+      }).catch(err => {
+        if (err.code === 'ECONNABORTED') {
+          this.$message.error('请求超时')
+        } else {
+          this.$message.error('操作失败')
+        }
+      }).finally(() => {
+        this.dialogVisible = false
+      })
+    },
     dialogSubmitHandler() {
       this.$refs.dialogForm.validate((flag, obj) => {
         if (!flag) {
           return false
         }
-        this.editNoticeApi()
+        this.editArticleApi()
       })
     },
     resetDialogForm(data) {
@@ -127,13 +139,9 @@ export default {
     getArticleApi(id) {
       console.log(id)
       return new Promise((resolve, reject) => {
-        service.get('/blog/article/' + id).then(res => {
-          const data = res.data
-          if (data.code !== 200) {
-            this.$message.error(data.msg)
-            reject()
-          }
-          resolve(data.data)
+        getArticle(id).then(res => {
+          console.log(res)
+          resolve(res.data)
         }).catch(() => {
           this.$message.error('查询失败')
           reject()
@@ -144,12 +152,8 @@ export default {
       const params = JSON.parse(JSON.stringify(this.queryForm))
       params.pageNum = this.currentPage
       params.pageSize = this.pageSize
-      service.get('/blog/article/list', { params }).then(res => {
+      getArticleList(params).then(res => {
         console.log(res) // 打印响应数据
-        if (res.code !== 200) {
-          this.$message.error(res.data.msg)
-          return
-        }
         this.tableData = res.data.rows || []
         this.total = res.data.total || 0
       })
@@ -167,7 +171,12 @@ export default {
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryForm.state" placeholder="请选择状态" size="mini">
-            <el-option label="草稿" value="0" />
+            <el-option
+              v-for="(item,index) in stateList"
+              :key="index+1"
+              :label="item"
+              :value="index+1"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="作者">
@@ -175,7 +184,12 @@ export default {
         </el-form-item>
         <el-form-item label="分类">
           <el-select v-model="queryForm.category" placeholder="请选择分类" size="mini">
-            <el-option label="前端" value="0" />
+            <el-option
+              v-for="(item,index) in categoryList"
+              :key="index+1"
+              :label="item"
+              :value="index+1"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="发布时间">
@@ -189,8 +203,8 @@ export default {
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="el-icon-search" size="mini">搜索</el-button>
-          <el-button icon="el-icon-refresh" size="mini">重置</el-button>
+          <el-button type="primary" icon="el-icon-search" size="mini" @click="queryHandler">搜索</el-button>
+          <el-button icon="el-icon-refresh" size="mini" @click="queryHandler('RESET')">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -203,8 +217,8 @@ export default {
           <el-button type="warning" plain icon="el-icon-download" size="mini" @click="exportHandler">导出</el-button>
         </div>
         <div class="row-right">
-          <el-button icon="el-icon-search" circle size="mini" @click="queryFormVisible=!queryFormVisible"></el-button>
-          <el-button icon="el-icon-refresh" circle size="mini" @click="queryHandler"></el-button>
+          <el-button icon="el-icon-search" circle size="mini" @click="queryFormVisible=!queryFormVisible" />
+          <el-button icon="el-icon-refresh" circle size="mini" @click="queryHandler" />
         </div>
       </div>
       <div class="table">
@@ -212,49 +226,51 @@ export default {
           ref="multipleTable"
           :data="tableData"
           tooltip-effect="dark"
-          @selection-change="handleSelectionChange">
+          @selection-change="handleSelectionChange"
+        >
           <el-table-column
             type="selection"
-            width="55">
-          </el-table-column>
+            width="55"
+          />
           <el-table-column
             prop="id"
             label="ID"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="title"
             label="标题"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="content"
             label="内容"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="state"
             label="状态"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="author"
             label="作者"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="categoryId"
             label="分类"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             prop="publishTime"
             label="发布时间"
-            align="center">
-          </el-table-column>
+            align="center"
+          />
           <el-table-column
             label="操作"
-            align="center">
+            align="center"
+          >
             <template slot-scope="scope">
               <el-button type="text" icon="el-icon-edit" size="mini" @click="updateHandler(scope.row)">修改</el-button>
               <el-button type="text" icon="el-icon-delete" size="mini" @click="deleteHandler(scope.row.id)">删除</el-button>
@@ -271,25 +287,47 @@ export default {
           :page-size="pageSize"
           layout="->, total, sizes, prev, pager, next, jumper"
           @size-change="sizeChangeHandler"
-          @current-change="currentChangeHandler">
-        </el-pagination>
+          @current-change="currentChangeHandler"
+        />
       </div>
     </div>
     <el-dialog :title="dialogMode==='INSERT'?'添加文章管理':'修改文章管理'" :visible.sync="dialogVisible">
       <el-form ref="dialogForm" :model="dialogForm" :rules="dialogRules">
         <el-form-item label="标题" prop="title" label-width="80px">
-          <el-input v-model="dialogForm.title" placeholder="请输入标题"></el-input>
+          <el-input v-model="dialogForm.title" placeholder="请输入标题" />
         </el-form-item>
         <el-form-item label="内容" prop="content" label-width="80px">
+          <quill-editor v-model="dialogForm.content" />
         </el-form-item>
         <el-form-item label="状态" prop="state" label-width="80px">
+          <el-select v-model="dialogForm.state" placeholder="请选择状态">
+            <el-option
+              v-for="(item,index) in stateList"
+              :key="index+1"
+              :label="item"
+              :value="index+1"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="作者" prop="author" label-width="80px">
-          <el-input v-model="dialogForm.author" placeholder="请输入作者"></el-input>
+          <el-input v-model="dialogForm.author" placeholder="请输入作者" />
         </el-form-item>
         <el-form-item label="分类" prop="category" label-width="80px">
+          <el-select v-model="dialogForm.category" placeholder="请选择分类">
+            <el-option
+              v-for="(item,index) in categoryList"
+              :key="index+1"
+              :label="item"
+              :value="index+1"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="发布时间" prop="publishTime" label-width="80px">
+          <el-date-picker
+            v-model="dialogForm.publishTime"
+            type="date"
+            placeholder="选择日期"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
