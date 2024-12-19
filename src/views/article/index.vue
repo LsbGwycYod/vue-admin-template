@@ -1,16 +1,24 @@
 <script>
-import { delArticle, editArticle, getArticle, getArticleList } from '@/api/article'
+import {
+  delArticle,
+  editArticle,
+  getArticle, getArticleCategoryApi,
+  getArticleList,
+  getArticleStateApi
+} from '@/api/article'
+import category from '@/views/category/index.vue'
 
 export default {
   name: 'Article',
   data() {
     return {
       queryForm: {
-        title: '',
-        state: '',
-        author: '',
-        category: '',
-        publishTime: ''
+        title: undefined,
+        state: undefined,
+        author: undefined,
+        category: undefined,
+        publishTimeBegin: undefined,
+        publishTimeEnd: undefined
       },
       multipleSelection: [],
       queryFormVisible: true,
@@ -23,7 +31,7 @@ export default {
         content: '',
         state: '',
         author: '',
-        category: '',
+        categoryId: '',
         publishTime: ''
       },
       dialogMode: 'INSERT',
@@ -36,11 +44,13 @@ export default {
           { required: true, message: '作者不能为空', trigger: 'blur' }
         ]
       },
-      stateList: ['草稿', '已上线', '已下线'],
-      categoryList: ['前端', '后端']
+      stateList: undefined,
+      categoryList: undefined
     }
   },
   created() {
+    this.getStateType()
+    this.getCategoryType()
     this.listArticleApi()
   },
   methods: {
@@ -92,7 +102,7 @@ export default {
       this.deleteHandler(ids.join(','))
     },
     exportHandler() {
-      console.log('exportHandler')
+      window.open('http://localhost:9528/dev-api/blog/article/export')
     },
     editArticleApi() {
       editArticle(this.dialogMode, this.dialogForm).then(res => {
@@ -118,17 +128,11 @@ export default {
     },
     resetDialogForm(data) {
       console.log(this.$options.data())
-      // 手动重置
       this.dialogForm = this.$options.data().dialogForm
-      // 延时执行 callback 回头来调用
       this.$nextTick(() => {
-        // element ui重置
         this.$refs.dialogForm.resetFields()
         this.$refs.dialogForm.clearValidate()
         if (this.dialogMode === 'UPDATE') {
-          // 表格数据
-          // this.dialogForm = JSON.parse(JSON.stringify(data)), 注意深拷贝浅拷贝
-          // 后端接口数据
           this.getArticleApi(data.id).then(res => {
             console.log(res)
             this.dialogForm = res
@@ -153,10 +157,24 @@ export default {
       params.pageNum = this.currentPage
       params.pageSize = this.pageSize
       getArticleList(params).then(res => {
-        console.log(res) // 打印响应数据
-        this.tableData = res.data.rows || []
-        this.total = res.data.total || 0
+        console.log(res)
+        this.tableData = res.data.rows
+        this.total = res.data.total
       })
+    },
+    getStateType() {
+      getArticleStateApi().then(res => {
+        this.stateList = res.data
+      })
+    },
+    getCategoryType() {
+      getArticleCategoryApi().then(res => {
+        this.categoryList = res.data
+      })
+    },
+    getCategoryName(id) {
+      const category = this.categoryList.find(item => item.id === id)
+      return category ? category.name : ''
     }
   }
 }
@@ -165,7 +183,7 @@ export default {
 <template>
   <div class="article">
     <div class="head">
-      <el-form ref="query form" :model="queryForm" label-width="80px">
+      <el-form v-show="queryFormVisible" ref="query form" :model="queryForm" label-width="80px">
         <el-form-item label="标题">
           <el-input v-model="queryForm.title" placeholder="请输入标题" size="mini" />
         </el-form-item>
@@ -173,9 +191,9 @@ export default {
           <el-select v-model="queryForm.state" placeholder="请选择状态" size="mini">
             <el-option
               v-for="(item,index) in stateList"
-              :key="index+1"
-              :label="item"
-              :value="index+1"
+              :key="index"
+              :label="item.name"
+              :value="item.value"
             />
           </el-select>
         </el-form-item>
@@ -186,20 +204,29 @@ export default {
           <el-select v-model="queryForm.category" placeholder="请选择分类" size="mini">
             <el-option
               v-for="(item,index) in categoryList"
-              :key="index+1"
-              :label="item"
-              :value="index+1"
+              :key="index"
+              :label="item.name"
+              :value="item.id"
             />
           </el-select>
         </el-form-item>
         <el-form-item label="发布时间">
           <el-date-picker
-            v-model="queryForm.date"
-            type="date range"
+            v-model="queryForm.publishTimeBegin"
+            clearable
+            type="date"
             size="mini"
-            range-separator="-"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            value-format="yyyy-MM-dd"
+            placeholder="开始日期"
+          />
+          -
+          <el-date-picker
+            v-model="queryForm.publishTimeEnd"
+            clearable
+            type="date"
+            size="mini"
+            value-format="yyyy-MM-dd"
+            placeholder="结束日期"
           />
         </el-form-item>
         <el-form-item>
@@ -251,7 +278,11 @@ export default {
             prop="state"
             label="状态"
             align="center"
-          />
+          >
+            <template slot-scope="scope">
+              {{ stateList[scope.row.state].name }}
+            </template>
+          </el-table-column>
           <el-table-column
             prop="author"
             label="作者"
@@ -261,7 +292,11 @@ export default {
             prop="categoryId"
             label="分类"
             align="center"
-          />
+          >
+            <template slot-scope="scope">
+              {{ getCategoryName(scope.row.categoryId) }}
+            </template>
+          </el-table-column>
           <el-table-column
             prop="publishTime"
             label="发布时间"
@@ -303,9 +338,9 @@ export default {
           <el-select v-model="dialogForm.state" placeholder="请选择状态">
             <el-option
               v-for="(item,index) in stateList"
-              :key="index+1"
-              :label="item"
-              :value="index+1"
+              :key="index"
+              :label="item.name"
+              :value="item.value"
             />
           </el-select>
         </el-form-item>
@@ -313,12 +348,12 @@ export default {
           <el-input v-model="dialogForm.author" placeholder="请输入作者" />
         </el-form-item>
         <el-form-item label="分类" prop="category" label-width="80px">
-          <el-select v-model="dialogForm.category" placeholder="请选择分类">
+          <el-select v-model="dialogForm.categoryId" placeholder="请选择分类">
             <el-option
               v-for="(item,index) in categoryList"
-              :key="index+1"
-              :label="item"
-              :value="index+1"
+              :key="index"
+              :label="item.name"
+              :value="item.id"
             />
           </el-select>
         </el-form-item>
@@ -326,7 +361,7 @@ export default {
           <el-date-picker
             v-model="dialogForm.publishTime"
             type="date"
-            placeholder="选择日期"
+            placeholder="请选择日期"
           />
         </el-form-item>
       </el-form>

@@ -13,9 +13,9 @@ export function getCategory(id) {
     method: 'get'
   })
 }
-export function delCategory(id) {
+export function delCategory(ids) {
   return service({
-    url: '/blog/category/' + id,
+    url: '/blog/category/' + ids,
     method: 'delete'
   })
 }

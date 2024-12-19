@@ -6,7 +6,7 @@ export default {
   data() {
     return {
       queryForm: {
-        name: ''
+        name: undefined
       },
       queryFormVisible: true,
       tableData: [],
@@ -76,8 +76,8 @@ export default {
       const ids = this.multipleSelection.map(item => item.id)
       this.deleteHandler(ids.join(','))
     },
-    exportHandler(data) {
-      console.log(data)
+    exportHandler() {
+      window.open('http://localhost:9528/dev-api/blog/category/export')
     },
     editCategoryApi() {
       editCategory(this.dialogMode, this.dialogForm).then(res => {

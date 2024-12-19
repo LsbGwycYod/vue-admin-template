@@ -26,3 +26,15 @@ export function editArticle(mode, data) {
     data
   })
 }
+export function getArticleStateApi() {
+  return service({
+    url: '/dict/stateType',
+    method: 'get'
+  })
+}
+export function getArticleCategoryApi() {
+  return service({
+    url: '/blog/category/categoryType',
+    method: 'get'
+  })
+}
