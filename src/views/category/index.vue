@@ -222,7 +222,7 @@ export default {
           @current-change="currentChangeHandler"
         />
       </div>
-      <el-dialog :title="dialogMode==='INSERT'?'添加分类管理':'修改分类管理'" :visible.sync="dialogVisible">
+      <el-dialog :title="dialogMode==='INSERT'?'添加分类管理':'修改分类管理'" :visible.sync="dialogVisible" width="500px">
         <el-form ref="dialogForm" :model="dialogForm" :rules="dialogRules">
           <el-form-item label="名称" prop="name" label-width="80px">
             <el-input v-model="dialogForm.name" placeholder="请输入名称" />

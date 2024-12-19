@@ -6,7 +6,6 @@ import {
   getArticleList,
   getArticleStateApi
 } from '@/api/article'
-import category from '@/views/category/index.vue'
 
 export default {
   name: 'Article',
@@ -45,6 +44,7 @@ export default {
         ]
       },
       stateList: undefined,
+      stateTagList: ['', 'success', 'warning'],
       categoryList: undefined
     }
   },
@@ -71,7 +71,7 @@ export default {
     queryHandler(mode) {
       if (mode === 'RESET') {
         this.queryForm = this.$options.data().queryForm
-        this.$refs.queryForm.resetFields()
+        this.$refs.queryform.resetFields()
         console.log(this.queryForm)
       }
       this.listArticleApi()
@@ -172,9 +172,23 @@ export default {
         this.categoryList = res.data
       })
     },
+    getStateName(id) {
+      const state = this.stateList.find(item => item.value === id)
+      return state ? state.name : ''
+    },
     getCategoryName(id) {
       const category = this.categoryList.find(item => item.id === id)
       return category ? category.name : ''
+    },
+    updateState(row) {
+      console.log(row)
+      row.state = row.state === 1 ? 2 : 1
+      editArticle('UPDATE', row).then(res => {
+        console.log(res)
+        this.listArticleApi()
+      }).catch(err => {
+        console.log(err)
+      })
     }
   }
 }
@@ -183,7 +197,7 @@ export default {
 <template>
   <div class="article">
     <div class="head">
-      <el-form v-show="queryFormVisible" ref="query form" :model="queryForm" label-width="80px">
+      <el-form v-show="queryFormVisible" ref="queryform" :model="queryForm" label-width="80px">
         <el-form-item label="标题">
           <el-input v-model="queryForm.title" placeholder="请输入标题" size="mini" />
         </el-form-item>
@@ -280,7 +294,7 @@ export default {
             align="center"
           >
             <template slot-scope="scope">
-              {{ stateList[scope.row.state].name }}
+              <el-tag :type="stateTagList[scope.row.state]">{{ getStateName(scope.row.state) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column
@@ -307,8 +321,10 @@ export default {
             align="center"
           >
             <template slot-scope="scope">
-              <el-button type="text" icon="el-icon-edit" size="mini" @click="updateHandler(scope.row)">修改</el-button>
-              <el-button type="text" icon="el-icon-delete" size="mini" @click="deleteHandler(scope.row.id)">删除</el-button>
+              <el-button v-show="scope.row.state===1" type="text" icon="el-icon-top" size="mini" @click="updateState(scope.row)">下线</el-button>
+              <el-button v-show="scope.row.state!==1" type="text" icon="el-icon-bottom" size="mini" @click="updateState(scope.row)">上线</el-button>
+              <el-button v-show="scope.row.state!==1" type="text" icon="el-icon-edit" size="mini" @click="updateHandler(scope.row)">修改</el-button>
+              <el-button v-show="scope.row.state!==1" type="text" icon="el-icon-delete" size="mini" @click="deleteHandler(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -326,13 +342,13 @@ export default {
         />
       </div>
     </div>
-    <el-dialog :title="dialogMode==='INSERT'?'添加文章管理':'修改文章管理'" :visible.sync="dialogVisible">
+    <el-dialog :title="dialogMode==='INSERT'?'添加文章管理':'修改文章管理'" :visible.sync="dialogVisible" width="800px">
       <el-form ref="dialogForm" :model="dialogForm" :rules="dialogRules">
         <el-form-item label="标题" prop="title" label-width="80px">
           <el-input v-model="dialogForm.title" placeholder="请输入标题" />
         </el-form-item>
         <el-form-item label="内容" prop="content" label-width="80px">
-          <quill-editor v-model="dialogForm.content" />
+          <quill-editor v-model="dialogForm.content"/>
         </el-form-item>
         <el-form-item label="状态" prop="state" label-width="80px">
           <el-select v-model="dialogForm.state" placeholder="请选择状态">
