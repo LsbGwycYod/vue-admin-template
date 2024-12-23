@@ -19,6 +19,7 @@ export default {
         publishTimeBegin: undefined,
         publishTimeEnd: undefined
       },
+      dateRange: undefined,
       multipleSelection: [],
       queryFormVisible: true,
       tableData: [],
@@ -189,6 +190,11 @@ export default {
       }).catch(err => {
         console.log(err)
       })
+    },
+    dateFormat(picker) {
+      const startDate = this.dateRange.toString()
+      this.queryForm.publishTimeBegin = startDate.substring(0, 10)
+      this.queryForm.publishTimeEnd = startDate.substring(11)
     }
   }
 }
@@ -226,21 +232,14 @@ export default {
         </el-form-item>
         <el-form-item label="发布时间">
           <el-date-picker
-            v-model="queryForm.publishTimeBegin"
-            clearable
-            type="date"
+            v-model="dateRange"
+            type="daterange"
             size="mini"
+            range-separator="-"
             value-format="yyyy-MM-dd"
-            placeholder="开始日期"
-          />
-          -
-          <el-date-picker
-            v-model="queryForm.publishTimeEnd"
-            clearable
-            type="date"
-            size="mini"
-            value-format="yyyy-MM-dd"
-            placeholder="结束日期"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            @change="dateFormat"
           />
         </el-form-item>
         <el-form-item>
@@ -294,7 +293,7 @@ export default {
             align="center"
           >
             <template slot-scope="scope">
-              <el-tag :type="stateTagList[scope.row.state]">{{ getStateName(scope.row.state) }}</el-tag>
+              <el-tag :type="stateTagList[scope.row.state]" size="mini">{{ getStateName(scope.row.state) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column
@@ -348,7 +347,7 @@ export default {
           <el-input v-model="dialogForm.title" placeholder="请输入标题" />
         </el-form-item>
         <el-form-item label="内容" prop="content" label-width="80px">
-          <quill-editor v-model="dialogForm.content"/>
+          <quill-editor v-model="dialogForm.content" />
         </el-form-item>
         <el-form-item label="状态" prop="state" label-width="80px">
           <el-select v-model="dialogForm.state" placeholder="请选择状态">
