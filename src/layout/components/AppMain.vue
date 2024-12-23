@@ -12,16 +12,12 @@
 export default {
   name: 'AppMain',
   computed: {
-    cachedViews(){
+    cachedViews() {
       return this.$store.state.tagsView.cachedViews
     },
     key() {
       return this.$route.path
     }
-  },
-  watch: {
-    // 如果路由有变化，会再次执行该方法
-    '$route': 'fetchDate'
   }
 }
 </script>

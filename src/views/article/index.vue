@@ -17,9 +17,9 @@ export default {
         author: undefined,
         category: undefined,
         publishTimeBegin: undefined,
-        publishTimeEnd: undefined
+        publishTimeEnd: undefined,
+        dateRange: undefined
       },
-      dateRange: undefined,
       multipleSelection: [],
       queryFormVisible: true,
       tableData: [],
@@ -155,6 +155,7 @@ export default {
     },
     listArticleApi() {
       const params = JSON.parse(JSON.stringify(this.queryForm))
+      params.dateRange = undefined
       params.pageNum = this.currentPage
       params.pageSize = this.pageSize
       getArticleList(params).then(res => {
@@ -192,7 +193,7 @@ export default {
       })
     },
     dateFormat(picker) {
-      const startDate = this.dateRange.toString()
+      const startDate = this.queryForm.dateRange.toString()
       this.queryForm.publishTimeBegin = startDate.substring(0, 10)
       this.queryForm.publishTimeEnd = startDate.substring(11)
     }
@@ -232,7 +233,7 @@ export default {
         </el-form-item>
         <el-form-item label="发布时间">
           <el-date-picker
-            v-model="dateRange"
+            v-model="queryForm.dateRange"
             type="daterange"
             size="mini"
             range-separator="-"
